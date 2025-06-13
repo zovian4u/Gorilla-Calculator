@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gorilla Unlock Calculator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f6f8fa;
+      color: #333;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      color: #2c3e50;
+      margin-bottom: 40px;
+    }
+
+    .input-group {
+      margin: 20px auto;
+      max-width: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+    }
+
+    .input-group label {
+      flex: 1;
+      font-size: 1.1em;
+      text-align: left;
+    }
+
+    .input-group input,
+    .input-group select {
+      flex: 1;
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-left: 10px;
+      width: 60%;
+    }
+
+    button {
+      margin-top: 30px;
+      padding: 12px 30px;
+      font-size: 1em;
+      background-color: #2980b9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #1c5980;
+    }
+
+    .result {
+      margin-top: 40px;
+      font-size: 1.2em;
+      line-height: 1.8;
+    }
+
+    .note {
+      margin-top: 50px;
+      font-size: 0.9em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gorilla Unlock Calculator</h1>
+
+  <div class="input-group">
+    <label for="atk">Attack Level:</label>
+    <input list="atk-list" id="atk" />
+    <datalist id="atk-list"></datalist>
+  </div>
+
+  <div class="input-group">
+    <label for="def">Defense Level:</label>
+    <input list="def-list" id="def" />
+    <datalist id="def-list"></datalist>
+  </div>
+
+  <div class="input-group">
+    <label for="hp">HP Level:</label>
+    <input list="hp-list" id="hp" />
+    <datalist id="hp-list"></datalist>
+  </div>
+
+  <div class="input-group">
+    <label for="badges">Bond Badges:</label>
+    <input type="number" id="badges" min="0" value="0" />
+  </div>
+
+  <button onclick="calculateResources()">Calculate Resources Needed</button>
+
+  <div class="result" id="result"></div>
+
+  <div class="note">
+    Currently in this version created by #773 [020] Zovian, it only tells till Rookie Partner I just to unlock Gorilla.<br>
+    Hope it helps to get an estimate :)
+  </div>
+
+  <script>
+    // Fill datalist options dynamically
+    for (let i = 1; i <= 100; i++) {
+      ["atk", "def", "hp"].forEach(id => {
+        const option = document.createElement("option");
+        option.value = i;
+        document.getElementById(`${id}-list`).appendChild(option);
+      });
+    }
+
+    const guidebookData = [...Array(100).keys()].map(i => {
+      const level = i + 1;
+      if (level <= 20) return 600;
+      if (level <= 30) return 800;
+      if (level <= 60) return 1000;
+      if (level <= 80) return 1200;
+      return 1400;
+    });
+
+    const certificateData = {
+      5: 10, 10: 10, 15: 10, 20: 10, 25: 20,
+      30: 20, 35: 20, 40: 20, 45: 30, 50: 30,
+      55: 30, 60: 30, 65: 40, 70: 40, 75: 40,
+      80: 40, 85: 50, 90: 50, 95: 50, 100: 50
+    };
+
+    const sumResources = from => {
+      let guidebooks = 0;
+      let certificates = 0;
+      for (let i = from; i < 100; i++) {
+        guidebooks += guidebookData[i];
+        if (certificateData[i + 1]) certificates += certificateData[i + 1];
+      }
+      return { guidebooks, certificates };
+    };
+
+    function calculateResources() {
+      const atk = parseInt(document.getElementById('atk').value);
+      const def = parseInt(document.getElementById('def').value);
+      const hp = parseInt(document.getElementById('hp').value);
+      const badges = parseInt(document.getElementById('badges').value);
+
+      if (
+        isNaN(atk) || isNaN(def) || isNaN(hp) || isNaN(badges) ||
+        atk < 1 || def < 1 || hp < 1 || atk > 100 || def > 100 || hp > 100
+      ) {
+        document.getElementById('result').innerHTML = "❗ Please enter valid levels between 1 and 100.";
+        return;
+      }
+
+      const atkRes = sumResources(atk);
+      const defRes = sumResources(def);
+      const hpRes = sumResources(hp);
+
+      const totalGuidebooks = atkRes.guidebooks + defRes.guidebooks + hpRes.guidebooks;
+      const totalCertificates = atkRes.certificates + defRes.certificates + hpRes.certificates;
+      const requiredBadges = 24;
+      const remainingBadges = Math.max(0, requiredBadges - badges);
+
+      if (atk === 100 && def === 100 && hp === 100 && remainingBadges === 0) {
+        document.getElementById('result').innerHTML = `
+          🎉 <strong>Congratulations!</strong><br>
+          You can promote your Gorilla to <strong>Rookie Partner I</strong>.
+        `;
+      } else {
+        document.getElementById('result').innerHTML = `
+          <strong>Remaining Resources Needed to Unlock Gorilla (Rookie Partner I):</strong><br><br>
+          🦍 Training Guidebooks: ${totalGuidebooks}<br>
+          📜 Training Certificates: ${totalCertificates}<br>
+          🧷 Bond Badges: ${remainingBadges}
+        `;
+      }
+    }
+  </script>
+</body>
+</html>
